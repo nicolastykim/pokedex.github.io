@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Sidebar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&amp;display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Silkscreen, serif;
+            
+        }
+
+        .side-panel {
+            width: 360px;
+            height: 100vh;
+            background-color: #1a1a1a;
+            border-right: 1px solid #333;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-container {
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            background: #1a1a1a;
+            z-index: 10;
+            
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #1a1a1a;
+            border: rgba(89, 89, 89, 0.251) solid;
+            border-radius: 2px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            background: #222;
+            color: #3a687c;
+        }
+
+        .search-container input::placeholder {
+            color: #71A7BE;
+            opacity: 0.7;
+        }
+
+        .region-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .region-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 999px;
+            background: #00628C;
+            color: #71A7BE;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .region-button:hover {
+            background: #004C6E;
+            color: white;
+        }
+
+        .region-button.active {
+            background: #6DE5FF;
+            color: #004C6E;
+        }
+
+        .pokemon-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: calc(100vh - 140px);
+            padding: 0.5rem;
+        }
+
+        .pokemon-list {
+            list-style: none;
+        }
+
+        /* Your Custom Button Styles */
+        .pokemon-list-item {
+            margin: 1rem 0;
+            position: relative;
+            margin-left: 54px;
+        }
+
+        .pokedex-button {
+            width: 100%;
+            height: 44px;
+            position: relative;
+            cursor: pointer;
+            align-items: right;
+            display: flex;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+
+        .labels {
+            z-index: 4;
+            position: absolute;
+            height: 100%;
+            font-family: 'Silkscreen', serif;
+            font-weight: 400;
+            font-style: normal;
+            left: 12px;
+            line-height: 44px;
+            display: flex;
+            align-items: center;
+            
+        }
+
+        .id, .name {
+            display: inline-block;
+            height: 100%;
+            color: rgb(113, 167, 190);
+            margin: 0;
+        }
+        .id {
+          margin-right: 4px;
+        }
+
+        .pokedex-button:hover .id,
+        .pokedex-button:hover .name {
+            color: white;
+        }
+
+        .pentagon {
+            width: 272px;
+            height: 40px;
+            box-shadow: rgb(10, 42, 89) 4px 4px 24px inset;
+            clip-path: polygon(0% 0%, 0% 100%, 92% 100%, 100% 72%, 100% 0%);
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            z-index: 2;
+            background: radial-gradient(rgb(0, 98, 140), rgb(0, 0, 0) 120%);
+        }
+
+        .pokedex-button:hover .pentagon {
+            box-shadow: #7e90ac37 4px 4px 24px inset;
+        }
+
+        .pentagonborder {
+            width: 280px;
+            height: 44px;
+            background-color: rgb(141, 141, 141);
+            clip-path: polygon(0% 0%, 0% 100%, 92% 100%, 100% 72%, 100% 0%);
+            position: absolute;
+            transition: cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+
+        .pokedex-button:hover .pentagonborder {
+            background-color: #6DE5FF;
+        }
+
+        .sprite {
+           
+            height: 76px;
+            position: absolute;
+            margin-left: -52px;
+            padding-bottom: 22px;
+            filter: saturate(0%);
+            transition: margin-left 0.2s;
+            image-rendering: pixelated;
+            z-index: 5;
+        }
+
+        .pokedex-button:hover .sprite {
+            margin-left: -44px;
+            filter: saturate(100%);
+        }
+
+        .pokemon-list-item.active .pentagonborder {
+            background-color: #6DE5FF;
+        }
+
+        .pokemon-list-item.active .id,
+        .pokemon-list-item.active .name {
+            color: white;
+        }
+
+        .pokemon-list-item.active .sprite {
+            margin-left: -52px;
+            filter: saturate(100%);
+        }
+
+        .loading-text {
+            text-align: center;
+            padding: 1rem;
+            color: #71A7BE;
+        }
+
+        /* Custom scrollbar */
+        .pokemon-list-container::-webkit-scrollbar {
+    
+            width: 4px;
+        }
+
+        .pokemon-list-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .pokemon-list-container::-webkit-scrollbar-thumb {
+            background: #00628C;
+            border-radius: 4px;
+        }
+
+        .pokemon-list-container::-webkit-scrollbar-thumb:hover {
+            background: #6DE5FF;
+        }
+
+        .main-display {
+            background-color: black;
+        }
+
+        .whole-container {
+            display: flex;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+<div class="whole-container">
+
+    <aside class="side-panel">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search Pokémon...">
+            <div class="region-filters" id="regionFilters">
+                <!-- Region buttons will be added here -->
+            </div>
+        </div>
+        <div class="pokemon-list-container">
+            <div id="loadingText" class="loading-text">Loading Pokémon...</div>
+            <ul class="pokemon-list" id="pokemonList"></ul>
+        </div>
+    </aside>
+
+    <div class="main-display">
+        
+    </div>
+
+</div>
+
+    
+
+    <script>
+        class PokemonSidebar {
+            constructor() {
+                this.pokemonList = [];
+                this.filteredList = [];
+                this.currentRegion = 'all';
+                this.searchTerm = '';
+                
+                this.regions = {
+                    all: { name: 'All', range: [1, 1008] },
+                    kanto: { name: 'Kanto', range: [1, 151] },
+                    johto: { name: 'Johto', range: [152, 251] },
+                    hoenn: { name: 'Hoenn', range: [252, 386] },
+                    sinnoh: { name: 'Sinnoh', range: [387, 493] },
+                    unova: { name: 'Unova', range: [494, 649] },
+                    kalos: { name: 'Kalos', range: [650, 721] },
+                    alola: { name: 'Alola', range: [722, 809] },
+                    galar: { name: 'Galar', range: [810, 905] },
+                    paldea: { name: 'Paldea', range: [906, 1008] }
+                };
+
+                this.searchInput = document.getElementById('searchInput');
+                this.listElement = document.getElementById('pokemonList');
+                this.loadingText = document.getElementById('loadingText');
+                this.regionFilters = document.getElementById('regionFilters');
+                
+                this.initialize();
+            }
+
+            async initialize() {
+                try {
+                    this.createRegionFilters();
+                    await this.fetchAllPokemon();
+                    this.setupEventListeners();
+                    this.renderList();
+                    this.loadingText.style.display = 'none';
+                } catch (error) {
+                    this.loadingText.textContent = 'Error loading Pokémon. Please try again.';
+                    console.error('Error initializing sidebar:', error);
+                }
+            }
+
+            createRegionFilters() {
+                this.regionFilters.innerHTML = Object.entries(this.regions)
+                    .map(([key, region]) => `
+                        <button class="region-button ${key === 'all' ? 'active' : ''}" 
+                                data-region="${key}">
+                            ${region.name}
+                        </button>
+                    `).join('');
+            }
+
+            async fetchAllPokemon() {
+                const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1008');
+                const data = await response.json();
+                this.pokemonList = data.results.map((pokemon, index) => ({
+                    id: index + 1,
+                    name: pokemon.name,
+                    url: pokemon.url,
+                    sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index + 1}.png`
+                }));
+                this.filteredList = [...this.pokemonList];
+            }
+
+            setupEventListeners() {
+                // Debounced search
+                let searchTimeout;
+                this.searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.searchTerm = e.target.value.toLowerCase();
+                        this.filterList();
+                    }, 300);
+                });
+
+                // Region filter clicks
+                this.regionFilters.addEventListener('click', (e) => {
+                    const button = e.target.closest('.region-button');
+                    if (!button) return;
+
+                    // Update active state
+                    document.querySelectorAll('.region-button').forEach(btn => 
+                        btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    // Update region and refresh list
+                    this.currentRegion = button.dataset.region;
+                    this.filterList();
+                });
+
+                // Pokemon selection
+                this.listElement.addEventListener('click', (e) => {
+                    const listItem = e.target.closest('.pokemon-list-item');
+                    if (!listItem) return;
+
+                    document.querySelectorAll('.pokemon-list-item').forEach(item => 
+                        item.classList.remove('active'));
+                    listItem.classList.add('active');
+
+                    const pokemonId = listItem.dataset.id;
+                    const pokemon = this.pokemonList.find(p => p.id === parseInt(pokemonId));
+                    const event = new CustomEvent('pokemonSelected', { 
+                        detail: pokemon 
+                    });
+                    document.dispatchEvent(event);
+                });
+            }
+
+            filterList() {
+                const regionRange = this.regions[this.currentRegion].range;
+                
+                this.filteredList = this.pokemonList.filter(pokemon => {
+                    const matchesRegion = this.currentRegion === 'all' || 
+                        (pokemon.id >= regionRange[0] && pokemon.id <= regionRange[1]);
+                    
+                    const matchesSearch = !this.searchTerm || 
+                        pokemon.name.toLowerCase().includes(this.searchTerm) ||
+                        String(pokemon.id).padStart(3, '0').includes(this.searchTerm);
+                    
+                    return matchesRegion && matchesSearch;
+                });
+
+                this.renderList();
+            }
+
+            renderList() {
+                this.listElement.innerHTML = this.filteredList.map(pokemon => `
+                    <li class="pokemon-list-item" data-id="${pokemon.id}">
+                        <button class="pokedex-button">
+                            <img class="sprite" 
+                                 src="${pokemon.sprite}" 
+                                 alt="${pokemon.name}"
+                                 loading="lazy">
+                            <div class="pentagonborder"></div>
+                            <div class="pentagon"></div>
+                            <div class="labels">
+                                <span class="id">#${String(pokemon.id).padStart(3, '0')}</span>
+                                <span class="name">&nbsp;${pokemon.name}</span>
+                            </div>
+                        </button>
+                    </li>
+                `).join('');
+            }
+        }
+
+        // Initialize the sidebar
+        const sidebar = new PokemonSidebar();
+    </script>
+</body>
+</html>
